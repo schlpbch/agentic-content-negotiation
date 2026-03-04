@@ -2,31 +2,49 @@
 [![Version: v0.9.6](https://img.shields.io/badge/Version-v0.9.6-blue?style=flat-square)](https://github.com/schlpbch/ext-content-negotiation/releases)
 [![Type: Extensions Track](https://img.shields.io/badge/Type-Extensions%20Track-purple?style=flat-square)](#status)
 [![Extension ID: io.modelcontextprotocol/content-negotiation](https://img.shields.io/badge/Extension-io.modelcontextprotocol/content--negotiation-brightblue?style=flat-square)](#about-this-extension)
+[![RFC 2295 Inspired](https://img.shields.io/badge/RFC-2295-green?style=flat-square)](https://www.rfc-editor.org/rfc/rfc2295.html)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-orange?style=flat-square)](LICENSE)
+[![Reference Implementations: 8](https://img.shields.io/badge/Reference%20Implementations-8-informational?style=flat-square)](#reference-implementations)
+[![MCP Framework: SEP-2133](https://img.shields.io/badge/MCP%20Framework-SEP--2133-blueviolet?style=flat-square)](https://modelcontextprotocol.io/community/seps/2133-extensions)
 
 ## Overview
 
-This proposal introduces a **content negotiation mechanism** for MCP following
+Not all MCP clients are the same, agents differ in _what_ they need from the
+server and _how_ they can consume it.
+
+The content needed by a human consunmer (e.g., an end-user interface) may
+prioritize readability and conciseness, while an agent (e.g., a downstream tool
+or another model) may require structured data, detailed reasoning traces, or
+specific formats. Additionally, clients have varying capabilities — some can
+present interactive dialogs, others can process complex JSON, and some may only
+handle plain text.
+
+Clients also have **different context window sizes** and **latency
+requirements**, which may necessitate varying levels of detail or verbosity in
+responses. For example, a client with a small context window may prefer concise
+summaries, while one with a larger window can handle more verbose explanations.
+
+Especially _locally running_ agents have **limited compute resources** and thus
+prefer more compact responses that minimize unnecessary information. E.g., an
+agent running an mobile device may want to avoid large reasoning traces that
+consume bandwidth and processing power.
+
+To address these client requirements, this proposal introduces a **content
+negotiation mechanism** for MCP following
 [SEP-2133: Extensions](https://modelcontextprotocol.io/community/seps/2133-extensions),
 allowing servers to adapt response formats based on client-declared
 capabilities. Inspired by
 [RFC 2295](https://www.rfc-editor.org/rfc/rfc2295.html), adapted for MCP's
 session-scoped architecture.
 
-![Content Negotiation Diagram](content-negotiation-diagram.png)
+## Real-World Use Cases
 
-Servers can return **JSON for agents**, **markdown for humans**, **reasoning
-hints** for agents with sampling, and gate **interactive dialogs** on
-elicitation capability.
-
-## Problem Statement
-
-MCP servers cannot distinguish between AI agents (need structured data), humans
-(need prose), and agents with different capabilities (sampling, elicitation,
-roots, tasks). This forces developers toward:
-
-1. **Duplicate tools** (`weather_json` + `weather_prose`)
-2. **Unreliable heuristics** (guessing from `clientInfo.name`)
-3. **Bloated responses** (supporting all formats simultaneously)
+| Use Case                  | Problem                                             | Solution                                    |
+| ------------------------- | --------------------------------------------------- | ------------------------------------------- |
+| Journey Service           | Agent needs structured data; human needs itinerary  | One tool, negotiated format                 |
+| Geospatial/Mapping        | Rich descriptions vs. coordinates/boundaries        | GeoJSON for agents, markdown for humans     |
+| Multi-Agent Orchestration | Different specialist agents, different capabilities | Server adapts per agent's init capabilities |
+| Weather/Environment       | Same data, different consumers                      | Negotiated format eliminates duplication    |
 
 ## Solution
 
@@ -48,6 +66,17 @@ Clients declare the extension during `initialize`:
 Servers advertise support with an empty object in their capabilities, then
 respond with content optimized for the declared features.
 
+## Impact on MCP ecosystem
+
+This extension is **fully backward compatible** — clients and servers that do
+not implement it will continue to function as before. It is an **optional
+feature** that enhances flexibility without.
+
+This extension also helps to significantly _reduce bandwidth and latency_ as
+well as significantly **reduce commpute requirements**. All data not sent by
+server is bandwidth and compute saved on both sides. These also reduces
+**electrical power consumption** and thus have positive environmental impact.
+
 ## Key Features
 
 - [x] **[RFC 2295](https://www.rfc-editor.org/rfc/rfc2295.html)-Inspired**: HTTP
@@ -60,15 +89,6 @@ respond with content optimized for the declared features.
 - [x] **Fully Backward Compatible**: Zero breaking changes, optional feature
 - [x] **Secure**: Feature tags control content shape only, never auth/access
 
-## Real-World Use Cases
-
-| Use Case                  | Problem                                             | Solution                                    |
-| ------------------------- | --------------------------------------------------- | ------------------------------------------- |
-| Journey Service           | Agent needs structured data; human needs itinerary  | One tool, negotiated format                 |
-| Geospatial/Mapping        | Rich descriptions vs. coordinates/boundaries        | GeoJSON for agents, markdown for humans     |
-| Multi-Agent Orchestration | Different specialist agents, different capabilities | Server adapts per agent's init capabilities |
-| Weather/Environment       | Same data, different consumers                      | Negotiated format eliminates duplication    |
-
 ## Main Document
 
 Full specification in
@@ -78,15 +98,15 @@ Full specification in
 - **Motivation** - 6 real-world use cases + 4 workaround analyses
 - **Specification** - New capabilities, feature tags, examples
 - **Rationale** - Design decisions, RFC 2295 mapping, alternatives considered
-  (including comparison with [SEP-2053: Server Variants](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2053))
+  (including comparison with
+  [SEP-2053: Server Variants](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2053))
 - **Backward Compatibility** - No breaking changes, migration path
 - **Security Implications** - 5 risks analyzed with mitigations
 - **Reference Implementation** - TypeScript schemas, helper functions, examples
   (see also [TYPESCRIPT_REFERENCE.md](TYPESCRIPT_REFERENCE.md),
   [FASTMCP_REFERENCE.md](FASTMCP_REFERENCE.md),
   [SPRING_AI_REFERENCE.md](SPRING_AI_REFERENCE.md),
-  [RUST_REFERENCE.md](RUST_REFERENCE.md),
-  [GO_REFERENCE.md](GO_REFERENCE.md),
+  [RUST_REFERENCE.md](RUST_REFERENCE.md), [GO_REFERENCE.md](GO_REFERENCE.md),
   [CSHARP_REFERENCE.md](CSHARP_REFERENCE.md),
   [KOTLIN_REFERENCE.md](KOTLIN_REFERENCE.md), and
   [SWIFT_REFERENCE.md](SWIFT_REFERENCE.md) for full worked examples)
@@ -172,8 +192,11 @@ it.
 2. **Feedback** via
    [Issues](https://github.com/schlpbch/agentic-content-negotiation/issues) or
    [MCP Community Discussions](https://github.com/modelcontextprotocol/modelcontextprotocol/discussions)
-3. **Test** reference implementations:
-   [TypeScript](TYPESCRIPT_REFERENCE.md) · [Python/FastMCP](FASTMCP_REFERENCE.md) · [Java/Spring AI](SPRING_AI_REFERENCE.md) · [Rust/rmcp](RUST_REFERENCE.md) · [Go](GO_REFERENCE.md) · [C#/.NET](CSHARP_REFERENCE.md) · [Kotlin](KOTLIN_REFERENCE.md) · [Swift](SWIFT_REFERENCE.md)
+3. **Test** reference implementations: [TypeScript](TYPESCRIPT_REFERENCE.md) ·
+   [Python/FastMCP](FASTMCP_REFERENCE.md) ·
+   [Java/Spring AI](SPRING_AI_REFERENCE.md) · [Rust/rmcp](RUST_REFERENCE.md) ·
+   [Go](GO_REFERENCE.md) · [C#/.NET](CSHARP_REFERENCE.md) ·
+   [Kotlin](KOTLIN_REFERENCE.md) · [Swift](SWIFT_REFERENCE.md)
 4. **Suggest** improvements to feature tags, semantics, or design
 
 ## Links
@@ -200,8 +223,7 @@ it.
 Reference implementations: [TYPESCRIPT_REFERENCE.md](TYPESCRIPT_REFERENCE.md) ·
 [FASTMCP_REFERENCE.md](FASTMCP_REFERENCE.md) ·
 [SPRING_AI_REFERENCE.md](SPRING_AI_REFERENCE.md) ·
-[RUST_REFERENCE.md](RUST_REFERENCE.md) ·
-[GO_REFERENCE.md](GO_REFERENCE.md) ·
+[RUST_REFERENCE.md](RUST_REFERENCE.md) · [GO_REFERENCE.md](GO_REFERENCE.md) ·
 [CSHARP_REFERENCE.md](CSHARP_REFERENCE.md) ·
 [KOTLIN_REFERENCE.md](KOTLIN_REFERENCE.md) ·
 [SWIFT_REFERENCE.md](SWIFT_REFERENCE.md)
