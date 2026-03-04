@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.9.7 — Documentation Enhancements
+**Date**: March 4, 2026 | **Status**: Under Community Review
+
+### Changes
+- **README badges enhanced**: Added informational badges for RFC 2295 inspiration, Apache 2.0 license, reference implementation count (8), and SEP-2133 framework
+- **README restructured**: Improved opening sections with clearer problem exposition and ecosystem impact statement
+
+---
+
 ## v0.9.6 — Go, C# / .NET, Kotlin, and Swift Reference Implementations
 **Date**: February 27, 2026 | **Status**: Under Community Review
 
